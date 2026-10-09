@@ -174,8 +174,10 @@ function setupRoomListeners() {
     const state = snapshot.val();
     if (state === "playing") {
       showScreen("game");
+      setupInGameQuestionInput();
+      setupAnswerUI();
       setupChatUI();
-      setupHistoryUI(); // تجهيز واجهة السجل
+      setupHistoryUI();
     } else if (state === "lobby") {
       showScreen("waiting");
     }
@@ -188,13 +190,16 @@ function setupRoomListeners() {
     }
   });
 
-  // الاستماع للرسائل في الوقت الفعلي
+  roomRef.child('currentAnswer').on('value', (snapshot) => {
+    const answerData = snapshot.val();
+    renderAnswerDisplay(answerData);
+  });
+
   roomRef.child('chat').on('value', (snapshot) => {
     const chatData = snapshot.val() || {};
     renderChatMessages(chatData);
   });
 
-  // الاستماع لـ Historique اللعبة في الوقت الفعلي
   roomRef.child('history').on('value', (snapshot) => {
     const historyData = snapshot.val() || {};
     renderHistoryItems(Object.values(historyData));
@@ -270,6 +275,7 @@ startGameButton?.addEventListener("click", () => {
 
 drawButton?.addEventListener("click", () => {
   drawButton.disabled = true;
+  roomRef.child('currentAnswer').remove();
 
   roomRef.once('value', (snapshot) => {
     const data = snapshot.val() || {};
@@ -284,7 +290,6 @@ drawButton?.addEventListener("click", () => {
     const now = new Date();
     const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-    // تسجيل القرعة في الـ History
     roomRef.child('history').push({
       player: randomPlayer,
       question: randomQuestion,
@@ -319,6 +324,8 @@ function animateAndShowDrawResult(player, question) {
       if (drawStatus) drawStatus.innerText = "T9r3at lqor3a! 🎉";
       if (drawButton) drawButton.disabled = false;
 
+      updateAnswerControl(player);
+
       if (typeof confetti === 'function') {
         confetti({
           particleCount: 80,
@@ -330,32 +337,164 @@ function animateAndShowDrawResult(player, question) {
   }, 120);
 }
 
-// 1. إنشاء واجهة الشات والتعليقات
+// 1. Blast l'Jwab d'lsou2al (M3zooula bo7dha)
+function setupAnswerUI() {
+  let answerBoxContainer = document.getElementById("answerBoxContainer");
+  if (!answerBoxContainer) {
+    answerBoxContainer = document.createElement("div");
+    answerBoxContainer.id = "answerBoxContainer";
+    answerBoxContainer.className = "glass-card";
+    answerBoxContainer.style.cssText = "margin-top: 15px; padding: 15px; border-radius: 18px; text-align: center;";
+    
+    answerBoxContainer.innerHTML = `
+      <h3 style="font-size: 14px; margin-bottom: 8px; color: #28a745; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <span>📝</span> L'Jwab Mbachar 3la L'Sou2al
+      </h3>
+      <div id="answerDisplayArea" style="min-height: 40px; margin-bottom: 10px; font-size: 14px; color: #fff; font-weight: bold; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
+        <span style="color: #8189a8; font-weight: normal; font-size: 12px;">Kantsenawo l'jwab... ⏳</span>
+      </div>
+      <div id="answerInputGroup" style="display: flex; gap: 8px;">
+        <input id="directAnswerInput" type="text" placeholder="Kteb jwabek hna..." style="margin: 0; font-size: 13px; flex: 1;">
+        <button id="sendDirectAnswerBtn" class="add-btn" style="width: auto; padding: 0 12px; font-size: 13px; background: #28a745;">Sift L'Jwab</button>
+        <button id="refuseGageBtn" class="add-btn" style="width: auto; padding: 0 10px; font-size: 12px; background: #dc3545;">Hokm ⚠️</button>
+      </div>
+    `;
+
+    questionBox.appendChild(answerBoxContainer);
+
+    document.getElementById("sendDirectAnswerBtn").onclick = sendDirectAnswer;
+    document.getElementById("refuseGageBtn").onclick = triggerGageMode;
+  }
+}
+
+function updateAnswerControl(chosenPlayer) {
+  const isChosen = currentUser.toLowerCase() === chosenPlayer.toLowerCase();
+  const input = document.getElementById("directAnswerInput");
+  const sendBtn = document.getElementById("sendDirectAnswerBtn");
+  const gageBtn = document.getElementById("refuseGageBtn");
+
+  if (input && sendBtn && gageBtn) {
+    if (isChosen) {
+      input.disabled = false;
+      sendBtn.disabled = false;
+      gageBtn.disabled = false;
+      input.placeholder = "Nta li t9ra3ti! Kteb jwabek hna... ✍️";
+    } else {
+      input.disabled = true;
+      sendBtn.disabled = true;
+      gageBtn.disabled = true;
+      input.placeholder = `Kantsenawo jwab d ${chosenPlayer}... ⏳`;
+    }
+  }
+}
+
+function sendDirectAnswer() {
+  const input = document.getElementById("directAnswerInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  roomRef.child('currentAnswer').set({
+    sender: currentUser,
+    text: text,
+    isGage: false
+  });
+
+  input.value = "";
+}
+
+function triggerGageMode() {
+  roomRef.child('currentAnswer').set({
+    sender: currentUser,
+    text: "⚠️ Ma 9dach yjaweb w khtar ydir hokm! Sifto l'a7kam f l'chat 👇",
+    isGage: true
+  });
+}
+
+function renderAnswerDisplay(answerData) {
+  const display = document.getElementById("answerDisplayArea");
+  if (!display) return;
+
+  if (answerData) {
+    if (answerData.isGage) {
+      display.innerHTML = `<span style="color: #ff6b6b;">${answerData.sender}: ${answerData.text}</span>`;
+    } else {
+      display.innerHTML = `<span style="color: #7c9cff;">${answerData.sender}:</span> <span style="color: #28a745;">"${answerData.text}"</span> ✅`;
+    }
+  } else {
+    display.innerHTML = `<span style="color: #8189a8; font-weight: normal; font-size: 12px;">Kantsenawo l'jwab... ⏳</span>`;
+  }
+}
+
+// 2. Blast Ziyadat L'Ass2ila
+function setupInGameQuestionInput() {
+  let addQBox = document.getElementById("inGameQuestionContainer");
+  if (!addQBox) {
+    addQBox = document.createElement("div");
+    addQBox.id = "inGameQuestionContainer";
+    addQBox.className = "glass-card";
+    addQBox.style.cssText = "margin-top: 20px; padding: 15px; border-radius: 18px; text-align: left;";
+    
+    addQBox.innerHTML = `
+      <h3 style="font-size: 14px; margin-bottom: 8px; color: #7c9cff; display: flex; align-items: center; gap: 6px;">
+        <span>❓</span> Zid Sou2al Jdid f ay wqt
+      </h3>
+      <div style="display: flex; gap: 8px;">
+        <input id="inGameQuestionInput" type="text" placeholder="Kteb sou2al dyalak hna..." style="margin: 0; font-size: 13px; flex: 1;">
+        <button id="inGameAddQBtn" class="add-btn" style="width: auto; padding: 0 15px; font-size: 13px;">+ Zid</button>
+      </div>
+    `;
+
+    const gameScreen = document.getElementById("gameScreen");
+    if (gameScreen) {
+      const drawArea = gameScreen.querySelector(".draw-area");
+      if (drawArea && drawArea.parentNode) {
+        drawArea.parentNode.insertBefore(addQBox, drawArea.nextSibling);
+      }
+    }
+
+    document.getElementById("inGameAddQBtn").addEventListener("click", sendInGameQuestion);
+    document.getElementById("inGameQuestionInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendInGameQuestion();
+    });
+  }
+}
+
+function sendInGameQuestion() {
+  const input = document.getElementById("inGameQuestionInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  roomRef.child('questions').push({ text: text, addedBy: currentUser });
+  input.value = "";
+  alert("Tzad sou2al dyalak بنجاح! 🎯");
+}
+
+// 3. Blast L'Chat A3m w Ta3liqat
 function setupChatUI() {
   let chatBox = document.getElementById("chatBoxContainer");
   if (!chatBox) {
     chatBox = document.createElement("div");
     chatBox.id = "chatBoxContainer";
     chatBox.className = "glass-card";
-    chatBox.style.cssText = "margin-top: 25px; padding: 20px; border-radius: 20px; text-align: left;";
+    chatBox.style.cssText = "margin-top: 20px; padding: 20px; border-radius: 20px; text-align: left;";
     
     chatBox.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h3 style="font-size: 15px; color: #7c9cff; display: flex; align-items: center; gap: 6px;">
-          <span>💬</span> Chat & Ta3liqat
+          <span>💬</span> Chat A3m (Ta3liqat w A7kam)
         </h3>
         <span style="font-size: 10px; color: #8189a8;">(Kliqi 🗑️ bach tmasah meysage dyalak)</span>
       </div>
-      <div id="chatMessages" style="max-height: 160px; overflow-y: auto; font-size: 13px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+      <div id="chatMessages" style="max-height: 180px; overflow-y: auto; font-size: 13px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
       <div style="display: flex; gap: 8px;">
-        <input id="answerInput" type="text" placeholder="Kteb meysage awla ta3liq..." style="margin: 0; font-size: 13px; flex: 1;">
+        <input id="answerInput" type="text" placeholder="Kteb ta3liq awla hokm hna..." style="margin: 0; font-size: 13px; flex: 1;">
         <button id="sendAnswerBtn" class="add-btn" style="width: 45px; font-size: 18px;">➔</button>
       </div>
     `;
 
-    const drawArea = document.querySelector(".draw-area");
-    if (drawArea && drawArea.parentNode) {
-      drawArea.parentNode.insertBefore(chatBox, drawArea.nextSibling);
+    const addQBox = document.getElementById("inGameQuestionContainer");
+    if (addQBox && addQBox.parentNode) {
+      addQBox.parentNode.insertBefore(chatBox, addQBox.nextSibling);
     }
 
     document.getElementById("sendAnswerBtn").addEventListener("click", sendMessage);
@@ -365,14 +504,13 @@ function setupChatUI() {
   }
 }
 
-// 2. إنشاء واجهة سجل القرعة (Historique)
 function setupHistoryUI() {
   let historyBox = document.getElementById("historyBoxContainer");
   if (!historyBox) {
     historyBox = document.createElement("div");
     historyBox.id = "historyBoxContainer";
     historyBox.className = "glass-card";
-    historyBox.style.cssText = "margin-top: 25px; padding: 20px; border-radius: 20px; text-align: left;";
+    historyBox.style.cssText = "margin-top: 20px; padding: 20px; border-radius: 20px; text-align: left;";
     
     historyBox.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -431,7 +569,6 @@ function renderChatMessages(chatData) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// عرض السجل
 function renderHistoryItems(historyArray) {
   const historyList = document.getElementById("historyList");
   if (!historyList) return;
@@ -442,7 +579,6 @@ function renderHistoryItems(historyArray) {
     return;
   }
 
-  // ترتيب السجل من الأحدث إلى الأقدم
   historyArray.reverse().forEach(item => {
     const div = document.createElement("div");
     div.className = "item";
