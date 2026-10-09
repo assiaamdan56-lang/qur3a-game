@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qur3a ✦</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="background">
+    <div class="orb orb-one"></div>
+    <div class="orb orb-two"></div>
+    <div class="orb orb-three"></div>
+</div>
+
+<header class="navbar">
+    <div class="logo">
+        <span class="logo-icon">✦</span>
+        <span>Qur3a</span>
+    </div>
+
+    <div class="online">
+        <span class="online-dot"></span>
+        <span id="onlineCount">0</span> joueurs
+    </div>
+</header>
+
+<main>
+
+<!-- ================= HOME ================= -->
+<section id="homeScreen" class="screen active">
+    <div class="hero">
+        <div class="badge">
+            🎲 Game dyal s7ab
+        </div>
+
+        <h1>
+            Chkon ghadi
+            <span>yt9r3 lyoum?</span>
+        </h1>
+
+        <p>
+            Sayi9 l3ba, 3ti code l s7abek, w khalliw lqor3a t7dded chkon ghadi yjawb.
+        </p>
+
+        <div class="hero-buttons">
+            <button id="createButton" class="main-btn">
+                Créer une partie <span>→</span>
+            </button>
+            <button id="joinButton" class="secondary-btn">
+                Dkhol l partie
+            </button>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">👥</div>
+            <h3>S7ab</h3>
+            <p>Kol wa7ed ydkhol mn telephone dyalo.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🔐</div>
+            <h3>Code wa7ed</h3>
+            <p>Code wa7ed katsiftou f groupe.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🎲</div>
+            <h3>Qur3a</h3>
+            <p>Kolchi kaychof nafs resultat.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= CREATE ================= -->
+<section id="createScreen" class="screen">
+    <div class="form-card glass-card">
+        <div class="form-icon">🎮</div>
+        <span class="small-label">CREATE GAME</span>
+
+        <h2>Sayi9 l partie</h2>
+        <p>Kteb smiytek bach tkoun nta/nti l Host.</p>
+
+        <input id="hostName" type="text" placeholder="Smiya dyalek..." maxlength="20">
+        <input id="createPinInput" type="password" placeholder="Code Secret (E.g. 2442)" value="2442" maxlength="12">
+
+        <button id="createGameButton" class="main-btn full">
+            Créer la partie →
+        </button>
+        <button id="backFromCreate" class="back-btn">
+            ← Rje3
+        </button>
+    </div>
+</section>
+
+<!-- ================= JOIN ================= -->
+<section id="joinScreen" class="screen">
+    <div class="form-card glass-card">
+        <div class="form-icon">🚪</div>
+        <span class="small-label">JOIN GAME</span>
+
+        <h2>Dkhol l partie</h2>
+        <p>Kteb code li sifto lik s7abek.</p>
+
+        <input id="roomCodeInput" type="text" placeholder="Code dyal la partie (2442)..." maxlength="12">
+        <input id="playerName" type="text" placeholder="Smiya dyalek..." maxlength="20">
+
+        <button id="joinGameButton" class="main-btn full">
+            Dkhol →
+        </button>
+        <p id="joinError" class="error-message"></p>
+
+        <button id="backFromJoin" class="back-btn">
+            ← Rje3
+        </button>
+    </div>
+</section>
+
+<!-- ================= LOBBY ================= -->
+<section id="waitingScreen" class="screen">
+    <div class="lobby-header">
+        <span class="small-label">ROOM</span>
+        <h2>La partie wajda 🎲</h2>
+        <p>Sift had code l s7abek:</p>
+
+        <div class="room-code">
+            <span id="roomCode">2442</span>
+            <button id="copyCodeButton">📋</button>
+        </div>
+    </div>
+
+    <div class="lobby-grid">
+        <!-- PLAYERS -->
+        <div class="glass-card">
+            <div class="card-header">
+                <div>
+                    <span class="card-number">01</span>
+                    <h3>Les joueurs</h3>
+                </div>
+                <span id="playerCount" class="counter">0</span>
+            </div>
+            <div id="playersList" class="items-list"></div>
+        </div>
+
+        <!-- QUESTIONS -->
+        <div class="glass-card">
+            <div class="card-header">
+                <div>
+                    <span class="card-number">02</span>
+                    <h3>Les questions</h3>
+                </div>
+                <span id="questionCount" class="counter">0</span>
+            </div>
+
+            <div class="question-input">
+                <input id="questionInput" type="text" placeholder="Kteb chi question..." maxlength="160">
+                <button id="addQuestionButton" class="add-btn">+</button>
+            </div>
+            <div id="questionsList" class="items-list"></div>
+        </div>
+    </div>
+
+    <div id="hostControls" class="host-controls">
+        <p>👑 Nta/nti Host dyal had partie.</p>
+        <button id="startGameButton" class="start-game-btn">
+            🎲 Bda lqor3a
+        </button>
+    </div>
+
+    <div id="waitingMessage" class="waiting-message hidden">
+        ⏳ Kanstannaw l Host ybda l3ba...
+    </div>
+
+    <button id="leaveGameButton" class="back-btn">
+        ← Kherj mn la partie
+    </button>
+</section>
+
+<!-- ================= GAME ================= -->
+<section id="gameScreen" class="screen">
+    <div class="game-top">
+        <div>
+            <span class="small-label">QUR3A</span>
+            <h2>Chkon? 🎲</h2>
+        </div>
+        <div class="room-small">
+            Room: <strong id="gameRoomCode">2442</strong>
+        </div>
+    </div>
+
+    <div class="draw-area">
+        <div class="draw-box">
+            <div class="dice">🎲</div>
+            <span class="draw-label">CHKOUN?</span>
+            <h1 id="selectedPlayer">?</h1>
+            <p id="drawStatus">Kanstannaw lqor3a...</p>
+
+            <button id="drawButton" class="draw-btn">
+                🎲 Diri lqor3a
+            </button>
+        </div>
+
+        <div id="questionBox" class="question-box hidden">
+            <span class="question-label">❓ SOU2AL</span>
+            <div id="selectedQuestion">...</div>
+            <p class="answer-hint">Ljoueur li t9r3at 3lih howa li yjawb.</p>
+        </div>
+    </div>
+
+    <div class="players-status">
+        <div class="status-header">
+            <h3>Les joueurs</h3>
+            <span id="remainingPlayers">0</span>
+        </div>
+        <div id="gamePlayersList" class="game-players-list"></div>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <span>Qur3a ✦</span>
+    <span>Made for s7ab 🤍</span>
+</footer>
+
+<!-- Canvas Confetti -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<!-- Firebase SDKs Compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- App Script -->
+    <script src="script.js"></script>
+</body>
+</html>
+</body>
+</html>
